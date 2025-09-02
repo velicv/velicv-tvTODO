@@ -2,28 +2,60 @@ const { useState, useEffect } = React;
 
 // Lucide React icons as simple SVG components
 const Plus = ({ size = 24, className = "" }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
+    React.createElement('svg', {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "2",
+        className: className
+    },
+        React.createElement('line', { x1: "12", y1: "5", x2: "12", y2: "19" }),
+        React.createElement('line', { x1: "5", y1: "12", x2: "19", y2: "12" })
+    )
 );
 
 const Check = ({ size = 24, className = "" }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
-        <polyline points="20,6 9,17 4,12"></polyline>
-    </svg>
+    React.createElement('svg', {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "2",
+        className: className
+    },
+        React.createElement('polyline', { points: "20,6 9,17 4,12" })
+    )
 );
 
 const ChevronUp = ({ size = 24, className = "" }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
-        <polyline points="18,15 12,9 6,15"></polyline>
-    </svg>
+    React.createElement('svg', {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "2",
+        className: className
+    },
+        React.createElement('polyline', { points: "18,15 12,9 6,15" })
+    )
 );
 
 const ChevronDown = ({ size = 24, className = "" }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
-        <polyline points="6,9 12,15 18,9"></polyline>
-    </svg>
+    React.createElement('svg', {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "2",
+        className: className
+    },
+        React.createElement('polyline', { points: "6,9 12,15 18,9" })
+    )
 );
 
 const SmartTVTodoApp = () => {
@@ -218,10 +250,12 @@ const SmartTVTodoApp = () => {
         ...todos.map((todo, index) => 
           React.createElement('div', {
             key: todo.id,
-            className: `flex items-center p-6 rounded-2xl text-4xl transition-all duration-300 ${
+            onClick: () => toggleTodo(todo.id),
+            onMouseEnter: () => setSelectedIndex(index),
+            className: `flex items-center p-6 rounded-2xl text-4xl transition-all duration-300 cursor-pointer ${
               selectedIndex === index 
                 ? 'bg-blue-600 bg-opacity-50 border-4 border-blue-400 transform scale-105' 
-                : 'bg-slate-800 bg-opacity-50 border-2 border-slate-600'
+                : 'bg-slate-800 bg-opacity-50 border-2 border-slate-600 hover:bg-slate-700'
             }`
           },
             React.createElement('div', {
@@ -236,10 +270,12 @@ const SmartTVTodoApp = () => {
             }, todo.text),
             selectedIndex === index && React.createElement('div', {
               className: "text-2xl text-blue-300 ml-4"
-            }, "ENTER to toggle • BACKSPACE to delete")
+            }, "CLICK to toggle • BACKSPACE to delete")
           )
         ),
         React.createElement('div', {
+          onClick: () => setMode('add'),
+          onMouseEnter: () => setSelectedIndex(todos.length),
           className: `flex items-center p-6 rounded-2xl text-4xl transition-all duration-300 cursor-pointer ${
             selectedIndex === todos.length 
               ? 'bg-green-600 bg-opacity-50 border-4 border-green-400 transform scale-105' 
@@ -250,7 +286,8 @@ const SmartTVTodoApp = () => {
           React.createElement('span', { className: "flex-1" }, "Add New Task"),
           selectedIndex === todos.length && React.createElement('div', {
             className: "text-2xl text-green-300 ml-4"
-          }, "ENTER to add")
+          }, "CLICK to add"
+          )
         )
       ) : React.createElement('div', {
         className: "bg-slate-800 bg-opacity-50 rounded-2xl p-8 border-4 border-blue-400"
@@ -295,7 +332,7 @@ const SmartTVTodoApp = () => {
           mode === 'list' ? [
             React.createElement(ChevronUp, { className: "inline mr-2", size: 24, key: "up" }),
             React.createElement(ChevronDown, { className: "inline mr-4", size: 24, key: "down" }),
-            "Navigate • ENTER: Toggle/Add • BACKSPACE: Delete"
+            "Navigate • CLICK or ENTER: Toggle/Add • BACKSPACE: Delete"
           ] : "Type your task • ENTER: Save • BACKSPACE: Cancel"
         )
       )
