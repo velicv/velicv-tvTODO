@@ -66,6 +66,7 @@ const SmartTVTodoApp = () => {
   const [nextId, setNextId] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFireworks, setShowFireworks] = useState(false);
 
   // Load data from Google Sheets on component mount
   useEffect(() => {
@@ -226,9 +227,18 @@ const SmartTVTodoApp = () => {
   };
 
   const toggleTodo = (id) => {
-    setTodos(todos.map(todo => 
+    const newTodos = todos.map(todo => 
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+    );
+    setTodos(newTodos);
+    
+    // Check if all todos are now completed
+    const allCompleted = newTodos.length > 0 && newTodos.every(todo => todo.completed);
+    if (allCompleted) {
+      setShowFireworks(true);
+      // Hide fireworks after 5 seconds
+      setTimeout(() => setShowFireworks(false), 5000);
+    }
   };
 
   const deleteTodo = (id) => {
@@ -272,10 +282,98 @@ const SmartTVTodoApp = () => {
   };
 
   const completedCount = todos.filter(todo => todo.completed).length;
+  const allCompleted = todos.length > 0 && todos.every(todo => todo.completed);
+
+  // Fireworks component
+  const Fireworks = () => {
+    const [particles, setParticles] = useState([]);
+
+    useEffect(() => {
+      if (!showFireworks) return;
+
+      const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+      const newParticles = [];
+
+      // Create multiple firework bursts
+      for (let burst = 0; burst < 6; burst++) {
+        const burstX = Math.random() * 100;
+        const burstY = 20 + Math.random() * 30;
+        
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2;
+          const velocity = 2 + Math.random() * 3;
+          newParticles.push({
+            id: burst * 12 + i,
+            x: burstX,
+            y: burstY,
+            vx: Math.cos(angle) * velocity,
+            vy: Math.sin(angle) * velocity,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            life: 1,
+            delay: burst * 200
+          });
+        }
+      }
+      
+      setParticles(newParticles);
+
+      // Animate particles
+      const interval = setInterval(() => {
+        setParticles(prev => prev.map(particle => ({
+          ...particle,
+          x: particle.x + particle.vx * 0.5,
+          y: particle.y + particle.vy * 0.5,
+          vy: particle.vy + 0.1, // gravity
+          life: particle.life - 0.02
+        })).filter(particle => particle.life > 0));
+      }, 50);
+
+      return () => clearInterval(interval);
+    }, [showFireworks]);
+
+    if (!showFireworks) return null;
+
+    return React.createElement('div', {
+      className: "fixed inset-0 pointer-events-none z-50"
+    },
+      particles.map(particle => 
+        particle.life > 0 && Date.now() > particle.delay ? React.createElement('div', {
+          key: particle.id,
+          className: "absolute w-3 h-3 rounded-full",
+          style: {
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            backgroundColor: particle.color,
+            opacity: particle.life,
+            transform: `scale(${particle.life})`
+          }
+        }) : null
+      )
+    );
+  };
 
   return React.createElement('div', { 
     className: "min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white p-8" 
   },
+    // Fireworks overlay
+    React.createElement(Fireworks),
+    
+    // Celebration message
+    allCompleted && todos.length > 0 && React.createElement('div', {
+      className: "fixed inset-0 flex items-center justify-center z-40 pointer-events-none"
+    },
+      React.createElement('div', {
+        className: `text-8xl font-bold text-center animate-pulse ${showFireworks ? 'animate-bounce' : ''}`
+      },
+        React.createElement('div', {
+          className: "bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 bg-clip-text text-transparent mb-4"
+        }, "🎉 ALL DONE! 🎉"),
+        React.createElement('div', {
+          className: "text-4xl bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent"
+        }, "Great job completing all tasks!")
+      )
+    ),
+    
     React.createElement('div', { className: "text-center mb-8" },
       React.createElement('h1', { 
         className: "text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent" 
