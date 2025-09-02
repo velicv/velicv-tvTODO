@@ -174,6 +174,18 @@ const SmartTVTodoApp = () => {
             setSelectedIndex(prev => Math.min(todos.length, prev + 1));
           }
           break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (mode === 'list') {
+            setSelectedIndex(prev => Math.max(0, prev - 4));
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (mode === 'list') {
+            setSelectedIndex(prev => Math.min(todos.length, prev + 4));
+          }
+          break;
         case 'Enter':
           e.preventDefault();
           if (mode === 'list') {
@@ -225,20 +237,54 @@ const SmartTVTodoApp = () => {
     setSelectedIndex(Math.min(selectedIndex, newTodos.length - 1));
   };
 
+  // Split todos into 4 columns
+  const createColumns = () => {
+    const itemsPerColumn = Math.ceil((todos.length + 1) / 4); // +1 for add button
+    const columns = [[], [], [], []];
+    
+    // Distribute todos across columns
+    todos.forEach((todo, index) => {
+      const columnIndex = Math.floor(index / itemsPerColumn);
+      columns[columnIndex].push({ ...todo, originalIndex: index });
+    });
+    
+    // Add the "Add New Task" button to the last column with items
+    let addButtonColumn = 0;
+    for (let i = 3; i >= 0; i--) {
+      if (columns[i].length > 0) {
+        addButtonColumn = i;
+        break;
+      }
+    }
+    
+    // If all columns are empty, add to first column
+    if (todos.length === 0) {
+      addButtonColumn = 0;
+    }
+    
+    columns[addButtonColumn].push({ 
+      id: 'add-button', 
+      isAddButton: true, 
+      originalIndex: todos.length 
+    });
+    
+    return columns;
+  };
+
   const completedCount = todos.filter(todo => todo.completed).length;
 
   return React.createElement('div', { 
     className: "min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white p-8" 
   },
-    React.createElement('div', { className: "text-center mb-12" },
+    React.createElement('div', { className: "text-center mb-8" },
       React.createElement('h1', { 
-        className: "text-8xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent" 
+        className: "text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent" 
       }, "My Tasks"),
-      React.createElement('div', { className: "text-3xl text-slate-300" },
+      React.createElement('div', { className: "text-2xl text-slate-300" },
         `${completedCount} of ${todos.length} completed`
       )
     ),
-    React.createElement('div', { className: "max-w-6xl mx-auto" },
+    React.createElement('div', { className: "max-w-7xl mx-auto" },
       loading ? React.createElement('div', { className: "text-center" },
         React.createElement('div', { className: "text-5xl mb-4" }, "📋"),
         React.createElement('div', { className: "text-4xl text-slate-300" }, "Loading your tasks...")
@@ -246,51 +292,61 @@ const SmartTVTodoApp = () => {
         React.createElement('div', { className: "text-5xl mb-4" }, "⚠️"),
         React.createElement('div', { className: "text-3xl text-red-400 mb-4" }, error),
         React.createElement('div', { className: "text-2xl text-slate-400" }, "Using default tasks instead")
-      ) : mode === 'list' ? React.createElement('div', { className: "space-y-4" },
-        ...todos.map((todo, index) => 
+      ) : mode === 'list' ? React.createElement('div', { className: "grid grid-cols-4 gap-6" },
+        ...createColumns().map((column, columnIndex) =>
           React.createElement('div', {
-            key: todo.id,
-            onClick: () => toggleTodo(todo.id),
-            onMouseEnter: () => setSelectedIndex(index),
-            className: `flex items-center p-6 rounded-2xl text-4xl transition-all duration-300 cursor-pointer ${
-              selectedIndex === index 
-                ? 'bg-blue-600 bg-opacity-50 border-4 border-blue-400 transform scale-105' 
-                : 'bg-slate-800 bg-opacity-50 border-2 border-slate-600 hover:bg-slate-700'
-            }`
+            key: columnIndex,
+            className: "space-y-4"
           },
-            React.createElement('div', {
-              className: `w-8 h-8 rounded-full border-4 flex items-center justify-center mr-6 ${
-                todo.completed ? 'bg-green-500 border-green-500' : 'border-slate-400'
-              }`
-            },
-              todo.completed && React.createElement(Check, { size: 20, className: "text-white" })
-            ),
-            React.createElement('span', {
-              className: `flex-1 ${todo.completed ? 'line-through text-slate-400' : ''}`
-            }, todo.text),
-            selectedIndex === index && React.createElement('div', {
-              className: "text-2xl text-blue-300 ml-4"
-            }, "CLICK to toggle • BACKSPACE to delete")
-          )
-        ),
-        React.createElement('div', {
-          onClick: () => setMode('add'),
-          onMouseEnter: () => setSelectedIndex(todos.length),
-          className: `flex items-center p-6 rounded-2xl text-4xl transition-all duration-300 cursor-pointer ${
-            selectedIndex === todos.length 
-              ? 'bg-green-600 bg-opacity-50 border-4 border-green-400 transform scale-105' 
-              : 'bg-slate-700 bg-opacity-50 border-2 border-slate-500 hover:bg-slate-600'
-          }`
-        },
-          React.createElement(Plus, { size: 32, className: "mr-6" }),
-          React.createElement('span', { className: "flex-1" }, "Add New Task"),
-          selectedIndex === todos.length && React.createElement('div', {
-            className: "text-2xl text-green-300 ml-4"
-          }, "CLICK to add"
+            ...column.map((item) => 
+              item.isAddButton ? 
+                React.createElement('div', {
+                  key: 'add-button',
+                  onClick: () => setMode('add'),
+                  onMouseEnter: () => setSelectedIndex(item.originalIndex),
+                  className: `flex items-center p-4 rounded-2xl text-2xl transition-all duration-300 cursor-pointer ${
+                    selectedIndex === item.originalIndex 
+                      ? 'bg-green-600 bg-opacity-50 border-4 border-green-400 transform scale-105' 
+                      : 'bg-slate-700 bg-opacity-50 border-2 border-slate-500 hover:bg-slate-600'
+                  }`
+                },
+                  React.createElement(Plus, { size: 24, className: "mr-4" }),
+                  React.createElement('span', { className: "flex-1" }, "Add New Task"),
+                  selectedIndex === item.originalIndex && React.createElement('div', {
+                    className: "text-sm text-green-300 ml-2"
+                  }, "CLICK"
+                  )
+                )
+              :
+                React.createElement('div', {
+                  key: item.id,
+                  onClick: () => toggleTodo(item.id),
+                  onMouseEnter: () => setSelectedIndex(item.originalIndex),
+                  className: `flex items-center p-4 rounded-2xl text-2xl transition-all duration-300 cursor-pointer ${
+                    selectedIndex === item.originalIndex 
+                      ? 'bg-blue-600 bg-opacity-50 border-4 border-blue-400 transform scale-105' 
+                      : 'bg-slate-800 bg-opacity-50 border-2 border-slate-600 hover:bg-slate-700'
+                  }`
+                },
+                  React.createElement('div', {
+                    className: `w-6 h-6 rounded-full border-4 flex items-center justify-center mr-4 ${
+                      item.completed ? 'bg-green-500 border-green-500' : 'border-slate-400'
+                    }`
+                  },
+                    item.completed && React.createElement(Check, { size: 16, className: "text-white" })
+                  ),
+                  React.createElement('span', {
+                    className: `flex-1 ${item.completed ? 'line-through text-slate-400' : ''}`
+                  }, item.text),
+                  selectedIndex === item.originalIndex && React.createElement('div', {
+                    className: "text-xs text-blue-300 ml-2"
+                  }, "CLICK")
+                )
+            )
           )
         )
       ) : React.createElement('div', {
-        className: "bg-slate-800 bg-opacity-50 rounded-2xl p-8 border-4 border-blue-400"
+        className: "bg-slate-800 bg-opacity-50 rounded-2xl p-8 border-4 border-blue-400 max-w-4xl mx-auto"
       },
         React.createElement('h2', {
           className: "text-5xl font-bold mb-8 text-center"
@@ -331,8 +387,8 @@ const SmartTVTodoApp = () => {
         },
           mode === 'list' ? [
             React.createElement(ChevronUp, { className: "inline mr-2", size: 24, key: "up" }),
-            React.createElement(ChevronDown, { className: "inline mr-4", size: 24, key: "down" }),
-            "Navigate • CLICK or ENTER: Toggle/Add • BACKSPACE: Delete"
+            React.createElement(ChevronDown, { className: "inline mr-2", size: 24, key: "down" }),
+            "Navigate • ←→ Move between columns • CLICK or ENTER: Toggle/Add • BACKSPACE: Delete"
           ] : "Type your task • ENTER: Save • BACKSPACE: Cancel"
         )
       )
